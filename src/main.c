@@ -63,13 +63,13 @@ void emergencySaveToEEPROM() {
  * 
  */
 void initWatchdogTimer() {
-    asm volatile("wdt");            // 'Pet the Dog'
+    asm volatile("wdr");            // 'Pet the Dog'
     WDTCSR |= (1<<WDCE) | (1<<WDE); // Unlock prescaler changes for 4 clock cycles
     /* Set Timeout to 0.5 seconds, clear Interrupt flag and enable both Interrupt and system reset modes */
     WDTCSR = (1<<WDIF) | (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP0);
 }
 
-ISR(WDT) {
+ISR(WDT_vect) {
     emergencySaveToEEPROM();
 }
 

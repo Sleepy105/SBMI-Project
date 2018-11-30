@@ -24,9 +24,17 @@
 #define BREAKDOWN_ENTRY_STATE 0
 #define ODOMETRY_TIME_RESOLUTION 1000
 
-uint8_t state = 0;  // Current state of the state-machine
-uint8_t nstate = 0; // Next state of the state-machine
+uint8_t state = 0;              // Current state of the state-machine
+uint8_t nstate = 0;             // Next state of the state-machine
+volatile uint8_t istate = 0;    // Variable to prevent race-conditions to the state-machine's 'state'.
+volatile uint8_t i_flag = FALSE;// Flag to tell the main-loop if a request is made by a interrupt to change the current state-machine's state
 uint16_t odometryTime = 0;
+
+/* If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring. */
+ISR(BADISR_vect) {
+    istate = BREAKDOWN_ENTRY_STATE;
+    i_flag = TRUE;
+}
 
 /**
  * @brief Setups all External Interruptions
@@ -110,6 +118,11 @@ int main() {
     /* Main Program Loop */
     while(1) {
         asm volatile("wdr");    // 'Pet the Dog'
+
+        if (i_flag) {
+            state = istate;
+            i_flag = FALSE;
+        }
 
         if (!odometryTime) {
             updateOdometry(ODOMETRY_TIME_RESOLUTION);   // Update Odometry values

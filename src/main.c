@@ -46,6 +46,25 @@ ISR(INT1_vect) {    // M2_ENCODER_INTERRUPT_PIN Interrupt Call
     _M2_encoder_counter += 1;
 }
 
+void emergencySaveToEEPROM() {
+    // TODO: Save important variables to EEPROM
+}
+
+/**
+ * @brief Enables 
+ * 
+ */
+void initWatchdogTimer() {
+    asm volatile("wdt");            // 'Pet the Dog'
+    WDTCSR |= (1<<WDCE) | (1<<WDE); // Unlock prescaler changes for 4 clock cycles
+    /* Set Timeout to 0.5 seconds, clear Interrupt flag and enable both Interrupt and system reset modes */
+    WDTCSR = (1<<WDIF) | (1<<WDE) | (1<<WDIE) | (1<<WDP2) | (1<<WDP0);
+}
+
+ISR(WDT) {
+    emergencySaveToEEPROM();
+}
+
 /**
  * @brief Condenses all hardware configurations to one function call
  * 
@@ -55,6 +74,7 @@ void initHardware() {
 
     initExternalInterrupts();
     initMotors();
+    initWatchdogTimer();
 
     /* Activate Interrupts */
     sei();
@@ -63,17 +83,19 @@ void initHardware() {
 int main() {
     /* Check the reason for the reset */
     switch(MCUCR^0b00001111) {
+        /* COMMENT: Apesar de dois cases não fazerem nada, acabam por reduzir o tamanho do programa em dois bytes. Suspeito que seja uma optimização ao poder fazer um shift para testar cada case. */
         case PORF:  // Power-On Reset Flag
-            // Do nothing.
+            // TODO: Check if the siganture is present. If not prime the EEPROM
             break;
         case EXTRF: // External Reset Flag
-            // Do nothing.
+            // TODO: Same as PORF???? IDK... yet.
             break;
         case BORF:  // Brown-out Reset Flag
-            // TODO: Save all important RAM data to EEPROM QUICK!!!
+            emergencySaveToEEPROM();
             break;
         case WDRF:  // Watchdog System Reset Flag
             // TODO: Either go into Breakdown mode or log the reset to the EEPROM
+            // If needed, read saved data from EEPROM
             break;
         default:
             state = BREAKDOWN_ENTRY_STATE;
@@ -81,15 +103,20 @@ int main() {
     }
     MCUCR = 0; // Clear the Reset Flag Register
 
+    /* Hardware and Timer Initializations */
     initHardware();
     odometryTime = ODOMETRY_TIME_RESOLUTION; // Initialize counter
 
+    /* Main Program Loop */
     while(1) {
+        asm volatile("wdr");    // 'Pet the Dog'
+
         if (!odometryTime) {
             updateOdometry(ODOMETRY_TIME_RESOLUTION);   // Update Odometry values
             odometryTime = ODOMETRY_TIME_RESOLUTION;    // Reset the time variable
         }
         
+        /* State Machine */
         switch(state) {
             case 0:
                 setSpeed(100,100);
@@ -101,7 +128,7 @@ int main() {
                 break;
         }
 
-        nstate = state; // Update 'state' variable
+        state = nstate; // Update 'state' variable
     }
     return 0;
 }

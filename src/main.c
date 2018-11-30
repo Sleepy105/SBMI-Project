@@ -18,6 +18,7 @@
 /*******************************/
 
 //#define DEBUG
+//#define DEMO
 
 #define INITIAL_STATE 0
 #define BREAKDOWN_ENTRY_STATE 0
@@ -60,6 +61,26 @@ void initHardware() {
 }
 
 int main() {
+    /* Check the reason for the reset */
+    switch(MCUCR^0b00001111) {
+        case PORF:  // Power-On Reset Flag
+            // Do nothing.
+            break;
+        case EXTRF: // External Reset Flag
+            // Do nothing.
+            break;
+        case BORF:  // Brown-out Reset Flag
+            // TODO: Save all important RAM data to EEPROM QUICK!!!
+            break;
+        case WDRF:  // Watchdog System Reset Flag
+            // TODO: Either go into Breakdown mode or log the reset to the EEPROM
+            break;
+        default:
+            state = BREAKDOWN_ENTRY_STATE;
+            break;
+    }
+    MCUCR = 0; // Clear the Reset Flag Register
+
     initHardware();
     odometryTime = ODOMETRY_TIME_RESOLUTION; // Initialize counter
 

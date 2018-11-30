@@ -111,8 +111,7 @@ void updateOdometry (uint16_t millis) {
     }
 
     cli(); // Prevent interrupt call from changing the counter's values
-    
-    velocity[0] = (float)(((_M1_encoder_counter+_M2_encoder_counter)/2)/millis); // Average the velocity of the 2 motors
+    velocity[0] = (DPC * ((_M1_encoder_counter + _M2_encoder_counter)/2.0))/millis; // Average the velocity of the 2 motors
     _M1_encoder_counter = 0;
     _M2_encoder_counter = 0;
     

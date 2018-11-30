@@ -88,6 +88,15 @@ void initHardware() {
     sei();
 }
 
+
+/**
+ * @brief Disables unused peripherals to save power.
+ * 
+ */
+void disableUnusedHardware() {
+    // TODO: Disable unused peripherals to save power.
+}
+
 int main() {
     /* Check the reason for the reset */
     switch(MCUCR^0b00001111) {
@@ -113,6 +122,7 @@ int main() {
 
     /* Hardware and Timer Initializations */
     initHardware();
+    disableUnusedHardware();
     odometryTime = ODOMETRY_TIME_RESOLUTION; // Initialize counter
 
     /* Main Program Loop */

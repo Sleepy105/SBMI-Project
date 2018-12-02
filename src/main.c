@@ -5,11 +5,16 @@
  *      Author: Luís Sousa, Leonor Santos
  */
 
+#ifndef F_CPU
+#define F_CPU 16000000
+#endif
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 
 #include <motor_control.h>
+#include <BTcomms.h>
 
 
 /*******************************/
@@ -25,14 +30,19 @@
 #define BREAKDOWN_ENTRY_STATE 0
 #define ODOMETRY_TIME_RESOLUTION 1000
 
-uint8_t state = 0;              // Current state of the state-machine
-uint8_t nstate = 0;             // Next state of the state-machine
-volatile uint8_t istate = 0;    // Variable to prevent race-conditions to the state-machine's 'state'.
-volatile uint8_t i_flag = FALSE;// Flag to tell the main-loop if a request is made by a interrupt to change the current state-machine's state
+uint8_t state = 0;                  // Current state of the state-machine
+uint8_t nstate = 0;                 // Next state of the state-machine
+volatile uint8_t istate = 0;        // Variable to prevent race-conditions to the state-machine's 'state'.
+volatile uint8_t i_flag = FALSE;    // Flag to tell the main-loop if a request is made by a interrupt to change the current state-machine's state
 uint16_t odometryTime = 0;
 uint8_t mcucr_copy;
+volatile char lastReceivedChar = 0;
+volatile uint8_t newCharFlag = FALSE;
 
-/* If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring. */
+/**
+ * @brief If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring
+ * 
+ */
 ISR(BADISR_vect) {
     istate = BREAKDOWN_ENTRY_STATE;
     i_flag = TRUE;
@@ -48,14 +58,26 @@ void initExternalInterrupts() {
     EIFR |= (1<<INTF1) | (1<<INTF0);    // Clear Flag Register by writting '1's to the corresponding positions
 }
 
-ISR(INT0_vect) {    // M1_ENCODER_INTERRUPT_PIN Interrupt Call
+/**
+ * @brief M1_ENCODER_INTERRUPT_PIN Interrupt Call
+ * 
+ */
+ISR(INT0_vect) {
     _M1_encoder_counter += 1;
 }
 
-ISR(INT1_vect) {    // M2_ENCODER_INTERRUPT_PIN Interrupt Call
+/**
+ * @brief M2_ENCODER_INTERRUPT_PIN Interrupt Call
+ * 
+ */
+ISR(INT1_vect) {
     _M2_encoder_counter += 1;
 }
 
+/**
+ * @brief Saves important variables to EEPROM
+ * 
+ */
 void emergencySaveToEEPROM() {
     // TODO: Save important variables to EEPROM
 }
@@ -85,8 +107,22 @@ void disableWatchdogTimer() {
     WDTCSR = 0x00;
 }
 
+/**
+ * @brief Interrupt Service Routine for when the Watchdog Timer is triggered
+ * 
+ */
 ISR(WDT_vect) {
     emergencySaveToEEPROM();
+}
+
+/**
+ * @brief Callback function to handle the byte received by the UART interface
+ * 
+ * @param rxChar byte received by the UART interface
+ */
+void handleReceivedByte(char rxChar) {
+    lastReceivedChar = rxChar;
+    newCharFlag = TRUE;
 }
 
 /**
@@ -99,6 +135,8 @@ void initHardware() {
     initExternalInterrupts();
     initMotors();
     initWatchdogTimer();
+    setReceiveCallback(&handleReceivedByte);
+    initBTComms();
 
     /* Activate Interrupts */
     sei();
@@ -121,7 +159,7 @@ int main() {
     /* Check the reason for the reset */
     switch(mcucr_copy) {
         case PORF:  // Power-On Reset Flag
-            // TODO: Check if the siganture is present. If not prime the EEPROM
+            // TODO: Check if the siganture is present. If not, prime the EEPROM
             break;
         case EXTRF: // External Reset Flag
             // TODO: Same as PORF???? IDK... yet.

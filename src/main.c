@@ -15,6 +15,7 @@
 
 #include <motor_control.h>
 #include <BTcomms.h>
+#include <IRArray.h>
 
 
 /*******************************/
@@ -164,6 +165,7 @@ void initHardware() {
     setReceiveCallback(&handleReceivedByte);
     initBTComms();
     init_TC1_10ms();
+    initArrayHardware();
 
     /* Activate Interrupts */
     sei();

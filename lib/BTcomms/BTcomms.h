@@ -15,10 +15,6 @@
 #ifndef __BT_COMMS__
 #define __BT_COMMS__
 
-#ifndef F_CPU
-#define F_CPU 16000000
-#endif
-
 #define BAUD_TOL 2
 #define BAUD 9600
 

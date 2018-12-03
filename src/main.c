@@ -126,6 +126,32 @@ void handleReceivedByte(char rxChar) {
 }
 
 /**
+ * @brief Initializes Timer1 to trigger a interrupt every 10ms (TIMER1_COMPA_vect)
+ * 
+ */
+void init_TC1_10ms() {
+    TCCR1B = 0;                         // STOP the timer
+    TIFR1 = (7<<TOV1) | (1<<ICF1);      // Clear flag register
+    TCCR1A = 0;                         // Set mode...
+    TCCR1B = (1<<WGM12);                // ...to CTC
+    OCR1A = 625;                        // OCR1A
+    TIMSK1 = (1<<OCIE1A);               // Enable interrupt on compare with OCR1A
+    TCCR1B |= 4;                        // Set the TP to 256, therefore also starting the timer
+}
+
+/**
+ * @brief Handles the countdown of all application timers.
+ * 
+ * Supposedly, it is triggered every 10ms.
+ * 
+ */
+ISR(TIMER1_COMPA_vect) {
+    if (!odometryTime) {
+        odometryTime -= 10;
+    }
+}
+
+/**
  * @brief Condenses all hardware configurations to one function call
  * 
  */
@@ -137,6 +163,7 @@ void initHardware() {
     initWatchdogTimer();
     setReceiveCallback(&handleReceivedByte);
     initBTComms();
+    init_TC1_10ms();
 
     /* Activate Interrupts */
     sei();

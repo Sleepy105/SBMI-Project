@@ -80,10 +80,10 @@ void setSpeed (int speed1, int speed2) {
     }
     #endif
 
-    if (speed1 > 0) {
+    if (speed1 < 0) {
         speed1 = -speed1;
     }
-    if (speed2 > 0) {
+    if (speed2 < 0) {
         speed2 = -speed2;
     }
 

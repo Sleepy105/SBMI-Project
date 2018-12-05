@@ -194,7 +194,8 @@ int main() {
             // TODO: Same as PORF???? IDK... yet.
             break;
         case BORF:  // Brown-out Reset Flag
-            emergencySaveToEEPROM();
+            // TODO: Print reason out to LCD
+            // TODO: Interrupt is not enabled
             break;
         case WDRF:  // Watchdog System Reset Flag
             // TODO: Either go into Breakdown mode or log the reset to the EEPROM

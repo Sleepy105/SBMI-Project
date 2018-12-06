@@ -171,8 +171,8 @@ void initHardware() {
     initBTComms();
     init_TC1_10ms();
     initArrayHardware();
-    DDRB |= (1<<PB5);
-    PORTB &= ~(1<<PB5);
+    //DDRB |= (1<<PB5);
+    //PORTB &= ~(1<<PB5);
 
     /* Activate Interrupts */
     sei();
@@ -236,7 +236,7 @@ int main() {
         /* State Machine */
         switch(state) {
             case 0:
-                PORTB &= ~(1<<PB5);
+                //PORTB &= ~(1<<PB5);
                 if(!time_test) {
                     nstate = 1;
                     time_test = 2000;
@@ -249,7 +249,7 @@ int main() {
                     time_test = 2000;
                     setSpeed(25,100);
                 }
-                PORTB |= (1<<PB5);
+                //PORTB |= (1<<PB5);
                 break;
             default:
                 nstate = BREAKDOWN_ENTRY_STATE;

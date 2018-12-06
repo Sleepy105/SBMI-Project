@@ -22,20 +22,20 @@ void initMotors () {
     _M2_encoder_counter = 0;
 
     TCCR0B = 0; // Stop the Timer
-    TCCR0A = (1<<COM0A1) | (0<<COM0A0) | (1<<COM0B1) | (0<<COM0B0) | (1<<WGM01) | (1<<WGM00); // Set the Timer to Non-Inverting Fast-PWM Mode.
+    TCCR0A = (1<<COM0A1) | (0<<COM0A0) | (1<<COM0B1) | (0<<COM0B0) | (0<<WGM01) | (1<<WGM00); // Set the Timer to waveform generation mode 1.
     TIMSK0 = 0; // Disable all interrupt calls
     _initAuxPins();
     setSpeed(0, 0);  // Don't start the motor running
 
     /* Finish the Fast-PWM configuration and start the Timer with a 1024 prescaler */
-    TCCR0B = (0<<FOC0A) | (0<<FOC0B) | (1<<WGM02) | (1<<CS02) | (0<<CS01) | (1<<CS00);
+    TCCR0B = (0<<FOC0A) | (0<<FOC0B) | (0<<WGM02) | (1<<CS02) | (0<<CS01) | (1<<CS00);
 }
 
 void _initAuxPins () {
 
     /* Motor 1 */
     #ifdef M1_DIRECTION_PIN
-    DDRD |= (1<<M1_DIRECTION_PIN);  // Set as output
+    DDRD |= (1<<M1_DRIVE_PIN) | (1<<M1_DIRECTION_PIN);  // Set as output
     PORTD &= ~(1<<M1_DIRECTION_PIN);
     #endif
 
@@ -46,7 +46,7 @@ void _initAuxPins () {
 
     /* Motor 2 */
     #ifdef M2_DIRECTION_PIN
-    DDRD |= (1<<M2_DIRECTION_PIN);  // Set as output
+    DDRD |= (1<<M2_DRIVE_PIN) | (1<<M2_DIRECTION_PIN);  // Set as output
     PORTD &= ~(1<<M2_DIRECTION_PIN);
     #endif
 

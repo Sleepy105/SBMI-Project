@@ -35,10 +35,11 @@ uint8_t state = 0;                  // Current state of the state-machine
 uint8_t nstate = 0;                 // Next state of the state-machine
 volatile uint8_t istate = 0;        // Variable to prevent race-conditions to the state-machine's 'state'.
 volatile uint8_t i_flag = FALSE;    // Flag to tell the main-loop if a request is made by a interrupt to change the current state-machine's state
-uint16_t odometryTime = 0;
+volatile uint16_t odometryTime = 0;
 uint8_t mcucr_copy;
 volatile char lastReceivedChar = 0;
 volatile uint8_t newCharFlag = FALSE;
+volatile uint16_t time_test = 0;
 
 /**
  * @brief If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring
@@ -147,9 +148,13 @@ void init_TC1_10ms() {
  * 
  */
 ISR(TIMER1_COMPA_vect) {
-    if (!odometryTime) {
+    if (odometryTime) {
         odometryTime -= 10;
     }
+    if (time_test) {
+        time_test -= 10;
+    }
+    // FIXME: non multiples of 10 result in shit!
 }
 
 /**
@@ -166,6 +171,8 @@ void initHardware() {
     initBTComms();
     init_TC1_10ms();
     initArrayHardware();
+    DDRB |= (1<<PB5);
+    PORTB &= ~(1<<PB5);
 
     /* Activate Interrupts */
     sei();
@@ -229,9 +236,20 @@ int main() {
         /* State Machine */
         switch(state) {
             case 0:
-                setSpeed(100,100);
+                PORTB &= ~(1<<PB5);
+                if(!time_test) {
+                    nstate = 1;
+                    time_test = 2000;
+                    setSpeed(0,0);
+                }
                 break;
             case 1:
+                if(!time_test) {
+                    nstate = 0;
+                    time_test = 2000;
+                    setSpeed(25,100);
+                }
+                PORTB |= (1<<PB5);
                 break;
             default:
                 nstate = BREAKDOWN_ENTRY_STATE;

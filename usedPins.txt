@@ -1,0 +1,14 @@
+PD0 - Rx
+PD1 - Tx
+PD2 - INT0
+PD3 - INT1
+PD4 - OC0B
+PD5 - OC0A
+PD6 - M1_DIR
+PD7 - M2_DIR
+
+PB0 - IR_Sensor
+PB1 - IR_Sensor
+PB2 - IR_Sensor
+PB3 - IR_Sensor
+PB4 - IR_Sensor

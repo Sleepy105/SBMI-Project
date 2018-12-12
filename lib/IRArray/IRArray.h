@@ -18,10 +18,10 @@
 #define ARRAY_SIZE 5
 
 #define LEFTMOST_SENSOR_PIN PB0
-#define LEFT_CENTRE_SENSOR_PIN PB0
-#define CENTER_SENSOR_PIN PB0
-#define RIGHT_CENTRE_SENSOR_PIN PB0
-#define RIGHTMOST_SENSOR_PIN PB0
+#define LEFT_CENTRE_SENSOR_PIN PB1
+#define CENTER_SENSOR_PIN PB2
+#define RIGHT_CENTRE_SENSOR_PIN PB3
+#define RIGHTMOST_SENSOR_PIN PB4
 
 /**
  * @brief Initializes the hardware required for the proper function of the sensor array.

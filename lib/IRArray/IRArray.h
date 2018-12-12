@@ -8,7 +8,6 @@
  *  The sensors used output a simple digital signal, given the reflection of IR radiation from the surface in question.
  *  A potentiometer is also present in these sensors for adjustment of the trigger distance. 
  */
- // TODO: Check this
 
 #include <avr/io.h>
 
@@ -17,11 +16,17 @@
 
 #define ARRAY_SIZE 5
 
-#define LEFTMOST_SENSOR_PIN PB0
-#define LEFT_CENTRE_SENSOR_PIN PB1
-#define CENTER_SENSOR_PIN PB2
-#define RIGHT_CENTRE_SENSOR_PIN PB3
-#define RIGHTMOST_SENSOR_PIN PB4
+#define IR_0 PC0
+#define IR_1 PC1
+#define IR_2 PC2
+#define IR_3 PC3
+#define IR_4 PC4
+
+#define LEFTMOST_SENSOR_PIN IR_0
+#define LEFT_CENTRE_SENSOR_PIN IR_1
+#define CENTER_SENSOR_PIN IR_2
+#define RIGHT_CENTRE_SENSOR_PIN IR_3
+#define RIGHTMOST_SENSOR_PIN IR_4
 
 /**
  * @brief Initializes the hardware required for the proper function of the sensor array.

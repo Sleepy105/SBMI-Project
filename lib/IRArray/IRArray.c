@@ -1,10 +1,10 @@
 #include <IRArray.h>
 
 void initArrayHardware() {
-    PORTB = ~( (1<<LEFTMOST_SENSOR_PIN) | (1<<LEFT_CENTRE_SENSOR_PIN) | (1<<CENTER_SENSOR_PIN) | (1<<RIGHT_CENTRE_SENSOR_PIN) | (1<<RIGHTMOST_SENSOR_PIN) );
-    DDRB |= (1<<LEFTMOST_SENSOR_PIN) | (1<<LEFT_CENTRE_SENSOR_PIN) | (1<<CENTER_SENSOR_PIN) | (1<<RIGHT_CENTRE_SENSOR_PIN) | (1<<RIGHTMOST_SENSOR_PIN);
+    DDRC &= ~( (1<<IR_0) | (1<<IR_1) | (1<<IR_2) | (1<<IR_3) | (1<<IR_4) );
+    PORTC |= (1<<IR_0) | (1<<IR_1) | (1<<IR_2) | (1<<IR_3) | (1<<IR_4);
 }
 
 uint8_t updateSensorValuesArray() {
-    return (PINB & 0b00011111);
+    return (PINC & 0b00011111);
 }

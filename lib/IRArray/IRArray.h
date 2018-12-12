@@ -16,7 +16,7 @@
 
 #define ARRAY_SIZE 5
 
-#define IR_0 PC0        /*The 5 IR sensors are displayed as an array. Each one has its order number*/
+#define IR_0 PC0
 #define IR_1 PC1
 #define IR_2 PC2
 #define IR_3 PC3

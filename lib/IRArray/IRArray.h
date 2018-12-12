@@ -22,12 +22,6 @@
 #define IR_3 PC3
 #define IR_4 PC4
 
-#define LEFTMOST_SENSOR_PIN IR_0
-#define LEFT_CENTRE_SENSOR_PIN IR_1
-#define CENTER_SENSOR_PIN IR_2
-#define RIGHT_CENTRE_SENSOR_PIN IR_3
-#define RIGHTMOST_SENSOR_PIN IR_4
-
 /**
  * @brief Initializes the hardware required for the proper function of the sensor array.
  * 

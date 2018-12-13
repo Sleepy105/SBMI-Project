@@ -46,6 +46,7 @@ uint8_t mcucr_copy;
 volatile char lastReceivedChar = 0;
 volatile uint8_t newCharFlag = FALSE;
 volatile uint16_t time_test = 0;
+volatile uint8_t IR_vector = 0;
 
 /**
  * @brief If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring
@@ -228,6 +229,7 @@ int main() {
     /* Main Program Loop */
     while(1) {
         wdt_reset();    // 'Pet the Dog'
+        IR_vector = updateSensorValuesArray();  // Update IR vector according to the sensors
 
         if (i_flag) {
             state = istate;

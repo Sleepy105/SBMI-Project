@@ -22,7 +22,6 @@
 #define IR_3 PC3
 #define IR_4 PC4
 
-volatile uint8_t IR_vector=0x00;
 /**
  * @brief Initializes the hardware required for the proper function of the sensor array.
  * 

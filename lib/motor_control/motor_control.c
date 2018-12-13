@@ -59,7 +59,7 @@ void _initAuxPins () {
 void setSpeed (int speed1, int speed2) {
     
     #ifdef M1_DIRECTION_PIN
-    OCR0X(M1_DRIVE_PIN, 0);
+    OCR0A = 255;
 
     if ((speed1 < 0 && M1_INVERTED) || (speed1 >= 0 && !M1_INVERTED)) {
         PORTD &= ~(1<<M1_DIRECTION_PIN);
@@ -70,9 +70,9 @@ void setSpeed (int speed1, int speed2) {
     #endif
 
     #ifdef M2_DIRECTION_PIN
-    OCR0X(M2_DRIVE_PIN, 0);
+    OCR0B = 255;
 
-    if ((speed2 < 0 && M1_INVERTED) || (speed2 >= 0 && !M1_INVERTED)) {
+    if ((speed2 < 0 && M2_INVERTED) || (speed2 >= 0 && !M2_INVERTED)) {
         PORTD &= ~(1<<M2_DIRECTION_PIN);
     }
     else {
@@ -87,8 +87,8 @@ void setSpeed (int speed1, int speed2) {
         speed2 = -speed2;
     }
 
-    OCR0X(M1_DRIVE_PIN, (uint8_t)(speed1*255/100));
-    OCR0X(M2_DRIVE_PIN, (uint8_t)(speed2*255/100));
+    OCR0A = (uint8_t)(255-(speed1*255/100));
+    OCR0B = (uint8_t)(255-(speed2*255/100));
 
     #ifdef M1_BRAKE_PIN
     if (speed1 == 0)

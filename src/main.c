@@ -243,17 +243,15 @@ int main() {
         switch(state) {
             case 0:
                 //PORTB &= ~(1<<PB5);
-                if(!time_test) {
+                if(!((1<<LEFTMOST_SENSOR_PIN) & updateSensorValuesArray())) {
                     nstate = 1;
-                    time_test = 2000;
                     setSpeed(0,0);
                 }
                 break;
             case 1:
-                if(!time_test) {
+                if(((1<<LEFTMOST_SENSOR_PIN) & updateSensorValuesArray())){
                     nstate = 0;
-                    time_test = 2000;
-                    setSpeed(25,100);
+                    setSpeed(100,100);
                 }
                 //PORTB |= (1<<PB5);
                 break;

@@ -56,12 +56,6 @@
 /*****************************************/
 
 /**
- * @brief Macro to set the OCR0A/OCR0B registers to value, given a pin.
- * 
- */
-#define OCR0X(drivePin, value) (((drivePin) == PD6) ? (OCR0A = value) : (OCR0B = value))
-
-/**
  * @brief Distance Per Counter: Calculates the distance travelled between encoder pulses
  * 
  */

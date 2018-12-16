@@ -247,13 +247,13 @@ int main() {
                 //PORTB &= ~(1<<PB5);
                 if(!((1<<LEFTMOST_SENSOR_PIN) & updateSensorValuesArray())) {
                     nstate = 1;
-                    setSpeed(0,0);
+                    setSpeed(100,100);
                 }
                 break;
             case 1:
                 if(((1<<LEFTMOST_SENSOR_PIN) & updateSensorValuesArray())){
                     nstate = 0;
-                    setSpeed(100,100);
+                    setSpeed(0,0);
                 }
                 //PORTB |= (1<<PB5);
                 break;

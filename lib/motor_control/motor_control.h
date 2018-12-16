@@ -24,7 +24,7 @@
 #define M1_ENCODER_INTERRUPT_PIN INT0   // PD2
 #define M1_DIRECTION_PIN PD4
 //#define M1_BRAKE_PIN 0
-#define M1_INVERTED FALSE
+#define M1_INVERTED TRUE
 
 
 /*******************************/
@@ -36,7 +36,7 @@
 #define M2_ENCODER_INTERRUPT_PIN INT1   // PD3
 #define M2_DIRECTION_PIN PD7
 //#define M2_BRAKE_PIN 0
-#define M2_INVERTED TRUE
+#define M2_INVERTED FALSE
 
 
 /*******************************/

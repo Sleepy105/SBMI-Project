@@ -33,8 +33,13 @@
 #define RIGHT_CENTRE_SENSOR_PIN IR_3
 #define RIGHTMOST_SENSOR_PIN IR_4
 
+#define START_BUTTON PC0
+
+#define BASE_SPEED  15
+#define DECREMENT   3
+
 #define INITIAL_STATE 0
-#define BREAKDOWN_ENTRY_STATE 0
+#define BREAKDOWN_ENTRY_STATE 255
 #define ODOMETRY_TIME_RESOLUTION 1000
 
 uint8_t state = 0;                  // Current state of the state-machine
@@ -45,8 +50,11 @@ volatile uint16_t odometryTime = 0;
 uint8_t mcucr_copy;
 volatile char lastReceivedChar = 0;
 volatile uint8_t newCharFlag = FALSE;
-volatile uint16_t time_test = 0;
+volatile uint16_t time1 = 0;
 volatile uint8_t IR_vector = 0;
+uint8_t prev_IR_vector = 0;
+uint8_t IR_vector_changed = FALSE;
+uint8_t laps = 0;                   // Laps completed around the track
 
 /**
  * @brief If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring
@@ -158,8 +166,8 @@ ISR(TIMER1_COMPA_vect) {
     if (odometryTime) {
         odometryTime -= 10;
     }
-    if (time_test) {
-        time_test -= 10;
+    if (time1) {
+        time1 -= 10;
     }
     // FIXME: non multiples of 10 result in shit!
 }
@@ -178,8 +186,10 @@ void initHardware() {
     initBTComms();
     init_TC1_10ms();
     initArrayHardware();
-    //DDRB |= (1<<PB5);
-    //PORTB &= ~(1<<PB5);
+    DDRC &= ~(1<<START_BUTTON);  // Set as Input // FIXME: Change this
+    PORTC |= (1<<START_BUTTON); // Enable Pull-up resistor
+    DDRB |= ~(1<<PB5);
+    PORTB &= ~(1<<PB5);
 
     /* Activate Interrupts */
     sei();
@@ -229,7 +239,11 @@ int main() {
     /* Main Program Loop */
     while(1) {
         wdt_reset();    // 'Pet the Dog'
-        IR_vector = updateSensorValuesArray();  // Update IR vector according to the sensors
+
+        /* Update IR vector variables according to the sensors */
+        prev_IR_vector = IR_vector;
+        IR_vector = updateSensorValuesArray();
+        IR_vector_changed = !(IR_vector == prev_IR_vector);
 
         if (i_flag) {
             state = istate;
@@ -240,22 +254,49 @@ int main() {
             updateOdometry(ODOMETRY_TIME_RESOLUTION);   // Update Odometry values
             odometryTime = ODOMETRY_TIME_RESOLUTION;    // Reset the time variable
         }
+
+        if (PINC & (1<<START_BUTTON)) {
+            state = 0;
+        }
         
         /* State Machine */
         switch(state) {
             case 0:
-                //PORTB &= ~(1<<PB5);
-                if(!((1<<LEFTMOST_SENSOR_PIN) & updateSensorValuesArray())) {
+                PORTB |= (1<<PB5);
+                setSpeed(0,0);
+                if (!(PINC & (1<<START_BUTTON))) {
                     nstate = 1;
-                    setSpeed(100,100);
+                    time1 = 3000;
                 }
                 break;
             case 1:
-                if(((1<<LEFTMOST_SENSOR_PIN) & updateSensorValuesArray())){
-                    nstate = 0;
-                    setSpeed(0,0);
+                PORTB &= ~(1<<PB5);
+                if (!time1) {
+                    nstate = 2;
+                    setSpeed(BASE_SPEED,BASE_SPEED);
                 }
-                //PORTB |= (1<<PB5);
+                break;
+            case 2:
+                PORTB |= (1<<PB5);
+                if (!IR_vector) {   // All sensors detecing a line
+                    nstate = 254;
+                    setSpeed(BASE_SPEED,BASE_SPEED);
+                    laps++;
+                }
+                else if (IR_vector_changed && (IR_vector ^ 0x1F)) { // Sensor values have changed and there is at least one detecting the line
+                        setSpeed(BASE_SPEED - (!(IR_vector & (1<<LEFTMOST_SENSOR_PIN)) * DECREMENT) - (!(IR_vector & (1<<LEFT_CENTRE_SENSOR_PIN)) * DECREMENT), BASE_SPEED - (!(IR_vector & (1<<RIGHT_CENTRE_SENSOR_PIN)) * DECREMENT) - (!(IR_vector & (1<<RIGHTMOST_SENSOR_PIN)) * DECREMENT));
+                }
+                break;
+            case 254:
+                if (IR_vector) {
+                    nstate = 2;
+                }
+                break;
+            case 255: // BREAKDOWN_ENTRY_STATE
+                setSpeed(0,0);          // Stop all movement
+                cli();                  // Disable all interrupts
+                disableWatchdogTimer(); // Disable the watchdog timer
+                while(1);               // Wait for reset
                 break;
             default:
                 nstate = BREAKDOWN_ENTRY_STATE;

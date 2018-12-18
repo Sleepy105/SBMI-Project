@@ -7,8 +7,8 @@ PD5 - OC0B
 PD6 - OC0A
 PD7 - M2_DIR
 
-PB0 - IR_Sensor
-PB1 - IR_Sensor
-PB2 - IR_Sensor
-PB3 - IR_Sensor
-PB4 - IR_Sensor
+PC0 - IR_Sensor
+PC1 - IR_Sensor
+PC2 - IR_Sensor
+PC3 - IR_Sensor
+PC4 - IR_Sensor

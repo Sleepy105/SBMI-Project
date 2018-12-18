@@ -14,11 +14,11 @@
 #ifndef __IR_ARRAY__
 #define __IR_ARRAY__
 
-#define IR_0 PB0
-#define IR_1 PB1
-#define IR_2 PB2
-#define IR_3 PB3
-#define IR_4 PB4
+#define IR_0 PC5
+#define IR_1 PC1
+#define IR_2 PC2
+#define IR_3 PC3
+#define IR_4 PC4
 
 /**
  * @brief Initializes the hardware required for the proper function of the sensor array.

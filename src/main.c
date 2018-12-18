@@ -34,6 +34,7 @@
 #define RIGHTMOST_SENSOR_PIN IR_4
 
 #define START_BUTTON PC0
+#define STATUS_LED PB5
 
 #define BASE_SPEED  15
 #define DECREMENT   3
@@ -188,8 +189,8 @@ void initHardware() {
     initArrayHardware();
     DDRC &= ~(1<<START_BUTTON);  // Set as Input // FIXME: Change this
     PORTC |= (1<<START_BUTTON); // Enable Pull-up resistor
-    DDRB |= ~(1<<PB5);
-    PORTB &= ~(1<<PB5);
+    DDRB |= ~(1<<STATUS_LED);
+    PORTB &= ~(1<<STATUS_LED);
 
     /* Activate Interrupts */
     sei();
@@ -262,7 +263,7 @@ int main() {
         /* State Machine */
         switch(state) {
             case 0:
-                PORTB |= (1<<PB5);
+                PORTB |= (1<<STATUS_LED);
                 setSpeed(0,0);
                 if (!(PINC & (1<<START_BUTTON))) {
                     nstate = 1;
@@ -270,14 +271,14 @@ int main() {
                 }
                 break;
             case 1:
-                PORTB &= ~(1<<PB5);
+                PORTB &= ~(1<<STATUS_LED);
                 if (!time1) {
                     nstate = 2;
                     setSpeed(BASE_SPEED,BASE_SPEED);
                 }
                 break;
             case 2:
-                PORTB |= (1<<PB5);
+                PORTB |= (1<<STATUS_LED);
                 if (!IR_vector) {   // All sensors detecing a line
                     nstate = 254;
                     setSpeed(BASE_SPEED,BASE_SPEED);

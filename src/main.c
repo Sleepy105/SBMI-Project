@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
+#include <avr/eeprom.h>
 
 #include <motor_control.h>
 #include <BTcomms.h>
@@ -27,6 +28,13 @@
 //#define DEBUG
 //#define DEMO
 
+#define EEPROM_MIN 0
+#define EEPROM_MAX 1023
+#define SIG_16 0b0101110101110100   // Program EEPROM signature.
+#define SIG_16_POS 0
+#define DISTANCE_COUNTER_POS 2
+#define WDT_RESET_COUNTER_POS 6
+
 #define LEFTMOST_SENSOR_PIN IR_0
 #define LEFT_CENTRE_SENSOR_PIN IR_1
 #define CENTER_SENSOR_PIN IR_2
@@ -36,17 +44,14 @@
 #define START_BUTTON PC0
 #define STATUS_LED PB5
 
-#define BASE_SPEED  15
-#define DECREMENT   3
+#define BASE_SPEED  10
+#define DECREMENT   10
 
 #define INITIAL_STATE 0
-#define BREAKDOWN_ENTRY_STATE 255
 #define ODOMETRY_TIME_RESOLUTION 1000
 
 uint8_t state = 0;                  // Current state of the state-machine
 uint8_t nstate = 0;                 // Next state of the state-machine
-volatile uint8_t istate = 0;        // Variable to prevent race-conditions to the state-machine's 'state'.
-volatile uint8_t i_flag = FALSE;    // Flag to tell the main-loop if a request is made by a interrupt to change the current state-machine's state
 volatile uint16_t odometryTime = 0;
 uint8_t mcucr_copy;
 volatile char lastReceivedChar = 0;
@@ -56,15 +61,7 @@ volatile uint8_t IR_vector = 0;
 uint8_t prev_IR_vector = 0;
 uint8_t IR_vector_changed = FALSE;
 uint8_t laps = 0;                   // Laps completed around the track
-
-/**
- * @brief If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring
- * 
- */
-ISR(BADISR_vect) {
-    istate = BREAKDOWN_ENTRY_STATE;
-    i_flag = TRUE;
-}
+float distance = 0;
 
 /**
  * @brief Setups all External Interruptions
@@ -97,7 +94,14 @@ ISR(INT1_vect) {
  * 
  */
 void emergencySaveToEEPROM() {
-    // TODO: Save important variables to EEPROM
+    eeprom_busy_wait();
+    uint8_t wdt_counter_value = eeprom_read_byte((void*)WDT_RESET_COUNTER_POS);
+    wdt_counter_value++;
+    eeprom_busy_wait();
+    eeprom_write_byte((void*)WDT_RESET_COUNTER_POS, wdt_counter_value);
+    
+    eeprom_busy_wait();
+    eeprom_update_float((void*)DISTANCE_COUNTER_POS, distance);
 }
 
 /**
@@ -160,17 +164,39 @@ void init_TC1_10ms() {
 /**
  * @brief Handles the countdown of all application timers.
  * 
- * Supposedly, it is triggered every 10ms.
+ * It is triggered every 10ms.
  * 
  */
 ISR(TIMER1_COMPA_vect) {
     if (odometryTime) {
+        if (odometryTime < 10) {
+            odometryTime = 10;
+        }
         odometryTime -= 10;
     }
     if (time1) {
+        if (time1 < 10) {
+            time1 = 10;
+        }
         time1 -= 10;
     }
-    // FIXME: non multiples of 10 result in shit!
+}
+
+void initEEPROM() {
+    eeprom_busy_wait();
+    uint16_t wd = eeprom_read_word((void*)SIG_16_POS);
+    if (wd != SIG_16) {
+        for (uint16_t i = EEPROM_MIN; i <= EEPROM_MAX; i++) {
+            eeprom_busy_wait();
+            eeprom_write_byte((void*)i, 0xFF);
+        }
+        eeprom_busy_wait();
+        eeprom_write_word((void*)SIG_16_POS, SIG_16);
+        eeprom_busy_wait();
+        eeprom_write_float((void*)DISTANCE_COUNTER_POS, 0x00);
+        eeprom_busy_wait();
+        eeprom_write_byte((void*)WDT_RESET_COUNTER_POS, 0x00);
+    }
 }
 
 /**
@@ -180,20 +206,35 @@ ISR(TIMER1_COMPA_vect) {
 void initHardware() {
     cli(); // Disable all interrupts during hardware configuration
 
-    initExternalInterrupts();
+    //initExternalInterrupts();
     initMotors();
     initWatchdogTimer();
     setReceiveCallback(&handleReceivedByte);
-    initBTComms();
+    //initBTComms();
     init_TC1_10ms();
     initArrayHardware();
-    DDRC &= ~(1<<START_BUTTON);  // Set as Input // FIXME: Change this
+    DDRC &= ~(1<<START_BUTTON);  // Set as Input
     PORTC |= (1<<START_BUTTON); // Enable Pull-up resistor
     DDRB |= ~(1<<STATUS_LED);
     PORTB &= ~(1<<STATUS_LED);
 
     /* Activate Interrupts */
     sei();
+}
+
+void breakdown() {
+    setSpeed(0,0);          // Stop all movement
+    cli();                  // Disable all interrupts
+    disableWatchdogTimer(); // Disable the watchdog timer
+    while(1);               // Wait for reset
+}
+
+/**
+ * @brief If a Inturrupt is called and has no ISR associated, this function is called, instead of a system reset occuring
+ * 
+ */
+ISR(BADISR_vect) {
+    breakdown();
 }
 
 
@@ -206,31 +247,25 @@ void disableUnusedHardware() {
 }
 
 int main() {
-    mcucr_copy = MCUCR^0b00001111;
+    mcucr_copy = MCUSR & 0b00001111;
     cli();
     disableWatchdogTimer();
 
     /* Check the reason for the reset */
     switch(mcucr_copy) {
-        case PORF:  // Power-On Reset Flag
-            // TODO: Check if the siganture is present. If not, prime the EEPROM
+        case (1<<PORF):  // Power-On Reset Flag
+        case (1<<EXTRF): // External Reset Flag
+            initEEPROM();
+            eeprom_busy_wait();
+            distance = eeprom_read_float((void*)DISTANCE_COUNTER_POS);
             break;
-        case EXTRF: // External Reset Flag
-            // TODO: Same as PORF???? IDK... yet.
-            break;
-        case BORF:  // Brown-out Reset Flag
-            // TODO: Print reason out to LCD
-            // TODO: Interrupt is not enabled
-            break;
-        case WDRF:  // Watchdog System Reset Flag
-            // TODO: Either go into Breakdown mode or log the reset to the EEPROM
-            // If needed, read saved data from EEPROM
-            break;
+        case (1<<WDRF):  // Watchdog System Reset Flag
+        case (1<<BORF):  // Brown-out Reset Flag
         default:
-            state = BREAKDOWN_ENTRY_STATE;
+            //breakdown();
             break;
     }
-    MCUCR = 0; // Clear the Reset Flag Register
+    MCUSR = 0; // Clear the Reset Flag Register
 
     /* Hardware and Timer Initializations */
     initHardware();
@@ -244,20 +279,28 @@ int main() {
         /* Update IR vector variables according to the sensors */
         prev_IR_vector = IR_vector;
         IR_vector = updateSensorValuesArray();
-        IR_vector_changed = !(IR_vector == prev_IR_vector);
-
-        if (i_flag) {
-            state = istate;
-            i_flag = FALSE;
-        }
+        IR_vector_changed = (IR_vector != prev_IR_vector);
 
         if (!odometryTime) {
             updateOdometry(ODOMETRY_TIME_RESOLUTION);   // Update Odometry values
             odometryTime = ODOMETRY_TIME_RESOLUTION;    // Reset the time variable
+
+            distance += velocity[0] * ODOMETRY_TIME_RESOLUTION/1000;
         }
 
         if (PINC & (1<<START_BUTTON)) {
             state = 0;
+        }
+
+        // TODO: Change to add all commands of BT comms in function and separate state
+        if (newCharFlag) {
+            if ('F' == lastReceivedChar) {
+                //PORTB |= (1<<STATUS_LED);
+            }
+            else {
+                //PORTB &= ~(1<<STATUS_LED);
+            }
+            newCharFlag = FALSE;
         }
         
         /* State Machine */
@@ -279,28 +322,30 @@ int main() {
                 break;
             case 2:
                 PORTB |= (1<<STATUS_LED);
-                if (!IR_vector) {   // All sensors detecing a line
+                if (0 == IR_vector) {   // All sensors detecing a line
                     nstate = 254;
                     setSpeed(BASE_SPEED,BASE_SPEED);
                     laps++;
                 }
-                else if (IR_vector_changed && (IR_vector ^ 0x1F)) { // Sensor values have changed and there is at least one detecting the line
-                        setSpeed(BASE_SPEED - (!(IR_vector & (1<<LEFTMOST_SENSOR_PIN)) * DECREMENT) - (!(IR_vector & (1<<LEFT_CENTRE_SENSOR_PIN)) * DECREMENT), BASE_SPEED - (!(IR_vector & (1<<RIGHT_CENTRE_SENSOR_PIN)) * DECREMENT) - (!(IR_vector & (1<<RIGHTMOST_SENSOR_PIN)) * DECREMENT));
+                else if (IR_vector_changed){// && (IR_vector ^ 0x3E)) { // Sensor values have changed and there is at least one detecting the line
+                    int l = BASE_SPEED,
+                        r = BASE_SPEED;
+                    if ( 0==(IR_vector & (1<<LEFTMOST_SENSOR_PIN)) ) {
+                        l = 0;
+                    }
+                    if ( 0==(IR_vector & (1<<RIGHTMOST_SENSOR_PIN)) ) {
+                        r = 0;
+                    }
+                    setSpeed(l,r);
                 }
                 break;
             case 254:
-                if (IR_vector) {
+                if (0 != IR_vector) {
                     nstate = 2;
                 }
                 break;
-            case 255: // BREAKDOWN_ENTRY_STATE
-                setSpeed(0,0);          // Stop all movement
-                cli();                  // Disable all interrupts
-                disableWatchdogTimer(); // Disable the watchdog timer
-                while(1);               // Wait for reset
-                break;
             default:
-                nstate = BREAKDOWN_ENTRY_STATE;
+                breakdown();
                 break;
         }
 

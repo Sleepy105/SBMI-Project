@@ -45,7 +45,7 @@ void initBTComms() {
         | (0<<UMSEL00)      // ...Asynchronous USART
         | (0<<UCPOL0);      // Bit used only for symchronous mode. Required to be '0' in async mode.
 
-    UCSR0B &= (1<<RXEN0);   // Enable RX communication
+    UCSR0B |= (1<<RXEN0);   // Enable RX communication
 }
 
 void setReceiveCallback(void* callbackFunctionPointer) {

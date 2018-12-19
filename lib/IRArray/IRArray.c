@@ -1,11 +1,11 @@
 #include <IRArray.h>
 
 void initArrayHardware() {
-    DDRC &= ~((1<<IR_0) | (1<<IR_1) | (1<<IR_2) | (1<<IR_3) | (1<<IR_4)); // IR sensor pins as inputs
-    PORTC |= ((1<<IR_0) | (1<<IR_1) | (1<<IR_2) | (1<<IR_3) | (1<<IR_4)); // pull-up resistor on
+    DDRC &= ~IR_ARRAY_MASK; // IR sensor pins as inputs
+    PORTC |= IR_ARRAY_MASK; // pull-up resistor on
 }
 
 uint8_t updateSensorValuesArray() {
-    return PINC & ((1<<IR_0) | (1<<IR_1) | (1<<IR_2) | (1<<IR_3) | (1<<IR_4));
+    return PINC & IR_ARRAY_MASK;
 }
 

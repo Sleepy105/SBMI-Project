@@ -53,7 +53,7 @@
 uint8_t state = 0;                  // Current state of the state-machine
 uint8_t nstate = 0;                 // Next state of the state-machine
 volatile uint16_t odometryTime = 0;
-uint8_t mcucr_copy;
+uint8_t mcusr_copy;
 volatile char lastReceivedChar = 0;
 volatile uint8_t newCharFlag = FALSE;
 volatile uint16_t time1 = 0;
@@ -247,25 +247,30 @@ void disableUnusedHardware() {
 }
 
 int main() {
-    mcucr_copy = MCUSR & 0b00001111;
+    mcusr_copy = MCUSR & 0b00001111;
+    MCUSR = 0; // Clear the Reset Flag Register
     cli();
     disableWatchdogTimer();
 
     /* Check the reason for the reset */
-    switch(mcucr_copy) {
-        case (1<<PORF):  // Power-On Reset Flag
-        case (1<<EXTRF): // External Reset Flag
+    /**
+     * The bootloader installed on our device clears the MCUSR register before starting the uploaded program.
+     * Therefore this snippet of code does not work on our device, even though it is in accordance to the
+     * information provided in the microcontroller's datasheet. 
+     */
+    //switch(mcusr_copy) {
+    //    case (1<<PORF):  // Power-On Reset Flag
+    //    case (1<<EXTRF): // External Reset Flag
             initEEPROM();
             eeprom_busy_wait();
             distance = eeprom_read_float((void*)DISTANCE_COUNTER_POS);
-            break;
-        case (1<<WDRF):  // Watchdog System Reset Flag
-        case (1<<BORF):  // Brown-out Reset Flag
-        default:
-            //breakdown();
-            break;
-    }
-    MCUSR = 0; // Clear the Reset Flag Register
+    //        break;
+    //    case (1<<WDRF):  // Watchdog System Reset Flag
+    //    case (1<<BORF):  // Brown-out Reset Flag
+    //    default:
+    //        breakdown();
+    //        break;
+    //}
 
     /* Hardware and Timer Initializations */
     initHardware();
@@ -294,12 +299,7 @@ int main() {
 
         // TODO: Change to add all commands of BT comms in function and separate state
         if (newCharFlag) {
-            if ('F' == lastReceivedChar) {
-                //PORTB |= (1<<STATUS_LED);
-            }
-            else {
-                //PORTB &= ~(1<<STATUS_LED);
-            }
+            state = REMOTE_CONTROL_STATE;
             newCharFlag = FALSE;
         }
         
@@ -322,29 +322,33 @@ int main() {
                 break;
             case 2:
                 //PORTB |= (1<<STATUS_LED);
-                if (0 == IR_vector) {   // All sensors detecing a line
+                if (!(IR_vector ^ IR_ARRAY_MASK)) {   // All sensors detecting the line
                     nstate = 254;
                     setSpeed(BASE_SPEED,BASE_SPEED);
                     laps++;
                 }
-                else if (IR_vector_changed){// && (IR_vector ^ 0x3E)) { // Sensor values have changed and there is at least one detecting the line
+                else if (IR_vector_changed && (IR_vector & IR_ARRAY_MASK)) { // Sensor values have changed and there is at least one detecting the line
                     int l = BASE_SPEED,
                         r = BASE_SPEED;
-                    if ( 0==(IR_vector & (1<<LEFTMOST_SENSOR_PIN)) ) {
+                    
+                    if ( IR_vector & _BV(LEFTMOST_SENSOR_PIN) ) {
+                        l = -BASE_SPEED;
+                    }
+                    else if ( IR_vector & _BV(LEFT_CENTRE_SENSOR_PIN) ) {
                         l = 0;
-                        PORTB |= (1<<STATUS_LED);
                     }
-                    else {
-                        PORTB &= ~(1<<STATUS_LED);
+
+                    if ( IR_vector & _BV(RIGHTMOST_SENSOR_PIN) ) {
+                        r = -BASE_SPEED;
                     }
-                    if ( 0==(IR_vector & (1<<RIGHTMOST_SENSOR_PIN)) ) {
+                    else if ( IR_vector & _BV(RIGHT_CENTRE_SENSOR_PIN) ) {
                         r = 0;
                     }
                     setSpeed(l,r);
                 }
                 break;
             case 254:
-                if (0 != IR_vector) {
+                if (IR_vector ^ IR_ARRAY_MASK) {
                     nstate = 2;
                 }
                 break;

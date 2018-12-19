@@ -20,6 +20,8 @@
 #define IR_3 PC3
 #define IR_4 PC4
 
+#define IR_ARRAY_MASK (_BV(IR_0) | _BV(IR_1) | _BV(IR_2) | _BV(IR_3) | _BV(IR_4))
+
 /**
  * @brief Initializes the hardware required for the proper function of the sensor array.
  * 

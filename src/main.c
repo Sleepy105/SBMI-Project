@@ -306,7 +306,7 @@ int main() {
         /* State Machine */
         switch(state) {
             case 0:
-                PORTB |= (1<<STATUS_LED);
+                //PORTB |= (1<<STATUS_LED);
                 setSpeed(0,0);
                 if (!(PINC & (1<<START_BUTTON))) {
                     nstate = 1;
@@ -314,14 +314,14 @@ int main() {
                 }
                 break;
             case 1:
-                PORTB &= ~(1<<STATUS_LED);
+                //PORTB &= ~(1<<STATUS_LED);
                 if (!time1) {
                     nstate = 2;
                     setSpeed(BASE_SPEED,BASE_SPEED);
                 }
                 break;
             case 2:
-                PORTB |= (1<<STATUS_LED);
+                //PORTB |= (1<<STATUS_LED);
                 if (0 == IR_vector) {   // All sensors detecing a line
                     nstate = 254;
                     setSpeed(BASE_SPEED,BASE_SPEED);
@@ -332,6 +332,10 @@ int main() {
                         r = BASE_SPEED;
                     if ( 0==(IR_vector & (1<<LEFTMOST_SENSOR_PIN)) ) {
                         l = 0;
+                        PORTB |= (1<<STATUS_LED);
+                    }
+                    else {
+                        PORTB &= ~(1<<STATUS_LED);
                     }
                     if ( 0==(IR_vector & (1<<RIGHTMOST_SENSOR_PIN)) ) {
                         r = 0;

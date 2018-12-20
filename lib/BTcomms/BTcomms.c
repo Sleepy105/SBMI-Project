@@ -35,7 +35,7 @@ void initBTComms() {
 
 
     /* Set up the data packet size. */
-    /* 9600N81 */
+    /* 9600 8N1 */
     UCSR0B &= ~(1<<UCSZ02); // 8 data...
     UCSR0C = (3<<UCSZ00)    // ...bits
         | (0<<UPM01)        // No parity...

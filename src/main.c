@@ -365,6 +365,8 @@ int main() {
             case 3:
                 if (IR_vector ^ IR_ARRAY_MASK) {
                     nstate = 2;
+                    eeprom_busy_wait();
+                    eeprom_update_float((void*)DISTANCE_COUNTER_POS, distance);
                 }
                 break;
             case 255: // REMOTE_CONTROL_STATE

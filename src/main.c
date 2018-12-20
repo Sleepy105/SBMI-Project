@@ -46,9 +46,14 @@
 
 #define BASE_SPEED  10
 #define DECREMENT   10
+#define BT_BASE_SPEED 20
+#define BT_TURBO_SPEED 100
 
 #define INITIAL_STATE 0
 #define ODOMETRY_TIME_RESOLUTION 1000
+
+#define REMOTE_CONTROL_STATE 255
+#define BT_TIMEOUT 3000
 
 uint8_t state = 0;                  // Current state of the state-machine
 uint8_t nstate = 0;                 // Next state of the state-machine
@@ -56,12 +61,15 @@ volatile uint16_t odometryTime = 0;
 uint8_t mcusr_copy;
 volatile char lastReceivedChar = 0;
 volatile uint8_t newCharFlag = FALSE;
+char currentBTCommand = 0;
 volatile uint16_t time1 = 0;
+volatile uint16_t timeBT = 0;
 volatile uint8_t IR_vector = 0;
 uint8_t prev_IR_vector = 0;
 uint8_t IR_vector_changed = FALSE;
 uint8_t laps = 0;                   // Laps completed around the track
 float distance = 0;
+int speedBT = BT_BASE_SPEED;
 
 /**
  * @brief Setups all External Interruptions
@@ -180,6 +188,12 @@ ISR(TIMER1_COMPA_vect) {
         }
         time1 -= 10;
     }
+    if (timeBT) {
+        if (timeBT < 10) {
+            timeBT = 10;
+        }
+        timeBT -= 10;
+    }
 }
 
 void initEEPROM() {
@@ -210,7 +224,7 @@ void initHardware() {
     initMotors();
     initWatchdogTimer();
     setReceiveCallback(&handleReceivedByte);
-    //initBTComms();
+    initBTComms();
     init_TC1_10ms();
     initArrayHardware();
     DDRC &= ~(1<<START_BUTTON);  // Set as Input
@@ -293,20 +307,21 @@ int main() {
             distance += velocity[0] * ODOMETRY_TIME_RESOLUTION/1000;
         }
 
-        if (PINC & (1<<START_BUTTON)) {
+        if ( (PINC & (1<<START_BUTTON)) && !timeBT) {
             state = 0;
         }
 
-        // TODO: Change to add all commands of BT comms in function and separate state
         if (newCharFlag) {
             state = REMOTE_CONTROL_STATE;
             newCharFlag = FALSE;
+            timeBT = BT_TIMEOUT;
         }
         
+        nstate = state;
         /* State Machine */
         switch(state) {
             case 0:
-                //PORTB |= (1<<STATUS_LED);
+                PORTB |= (1<<STATUS_LED);
                 setSpeed(0,0);
                 if (!(PINC & (1<<START_BUTTON))) {
                     nstate = 1;
@@ -314,16 +329,16 @@ int main() {
                 }
                 break;
             case 1:
-                //PORTB &= ~(1<<STATUS_LED);
+                PORTB &= ~(1<<STATUS_LED);
                 if (!time1) {
                     nstate = 2;
                     setSpeed(BASE_SPEED,BASE_SPEED);
                 }
                 break;
             case 2:
-                //PORTB |= (1<<STATUS_LED);
+                PORTB |= (1<<STATUS_LED);
                 if (!(IR_vector ^ IR_ARRAY_MASK)) {   // All sensors detecting the line
-                    nstate = 254;
+                    nstate = 3;
                     setSpeed(BASE_SPEED,BASE_SPEED);
                     laps++;
                 }
@@ -347,9 +362,54 @@ int main() {
                     setSpeed(l,r);
                 }
                 break;
-            case 254:
+            case 3:
                 if (IR_vector ^ IR_ARRAY_MASK) {
                     nstate = 2;
+                }
+                break;
+            case 255: // REMOTE_CONTROL_STATE
+                PORTB &= ~(1<<STATUS_LED);
+                if (!timeBT) {
+                    nstate = INITIAL_STATE;
+                }
+
+                if (lastReceivedChar != currentBTCommand) {
+                    currentBTCommand = lastReceivedChar;
+                    switch (lastReceivedChar) {
+                        case 'F': // Forward
+                            setSpeed(speedBT, speedBT);
+                            break;
+                        case 'B': // Back
+                            setSpeed(-speedBT, -speedBT);
+                            break;
+                        case 'L': // Left
+                            setSpeed(-speedBT, speedBT);
+                            break;
+                        case 'R': // Right
+                            setSpeed(speedBT, -speedBT);
+                            break;
+                        case 'G': // Forward Left
+                            setSpeed(speedBT/2, speedBT);
+                            break;
+                        case 'I': // Forward Right
+                            setSpeed(speedBT, speedBT/2);
+                            break;
+                        case 'H': // Back Left
+                            setSpeed(-speedBT/2, -speedBT);
+                            break;
+                        case 'J': // Back Right
+                            setSpeed(-speedBT, -speedBT/2);
+                            break;
+                        case 'S': // Stop
+                            setSpeed(0, 0);
+                            break;
+                        case 'X': // Extra On (Turbo)
+                            speedBT = BT_TURBO_SPEED;
+                            break;
+                        case 'x': // Extra Off (Turbo)
+                            speedBT = BT_BASE_SPEED;
+                            break;
+                    }
                 }
                 break;
             default:

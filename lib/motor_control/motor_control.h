@@ -46,7 +46,7 @@
 /*******************************/
 #define HISTORY_SIZE 10
 #define WHEEL_RADIUS 0.0065
-#define CPR 11
+#define CPR 11 //counts per rotation
 
 
 /*****************************************/
@@ -59,7 +59,7 @@
  * @brief Distance Per Counter: Calculates the distance travelled between encoder pulses
  * 
  */
-#define DPC ((2 * M_PI * (WHEEL_RADIUS*WHEEL_RADIUS))/CPR)
+#define DPC ((2 * M_PI * WHEEL_RADIUS)/CPR)
 
 /**
  * @brief Initializes Timer0 with a 1024 prescaler, in Fast-PWM mode to use

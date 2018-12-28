@@ -1,16 +1,3 @@
-/*
- *  motor_control.c
- *
- *  Created on: Oct 29, 2018
- *      Authors: Luís Sousa (lm.sousa@fe.up.pt), Leonor Santos (up201504515@fe.up.pt)
- *  
- *  Description:
- *      The code in this file is intended to provide a easy to use set of functions
- *      with the purpose of DC motor control with encoders.
- *      
- *      We use the PWM capabilities of the Atmega 328p Timer 0 to drive DC motors.
- */
-
 #include <motor_control.h>
 
 void initMotors () {
@@ -27,7 +14,7 @@ void initMotors () {
     _initAuxPins();
     setSpeed(0, 0);  // Don't start the motor running
 
-    /* Finish the  Phase-Correct PWM configuration and start the Timer with a 1024 prescaler */
+    /* Finish the Phase-Correct PWM configuration and start the Timer with a 1024 prescaler */
     TCCR0B = (0<<FOC0A) | (0<<FOC0B) | (0<<WGM02) | (1<<CS02) | (0<<CS01) | (1<<CS00);
 }
 

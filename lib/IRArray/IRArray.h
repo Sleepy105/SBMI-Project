@@ -1,12 +1,11 @@
-/*
- *  BTcomms.h
- *
- *  Created on: Nov 30, 2018
- *      Author: Luís Sousa, Leonor Santos
+/**
+ * @file IRArray.h
+ * @author Luís Sousa, Leonor Santos
+ * @date 30 Nov 2018
+ * @brief Library to handle a 5 IR sensor array.
  * 
- *  Library to handle a 5 IR sensor array.
- *  The sensors used output a simple digital signal, given the reflection of IR radiation from the surface in question.
- *  A potentiometer is also present in these sensors for adjustment of the trigger distance. 
+ * The sensors used output a simple digital signal, given the reflection of IR radiation from the surface in question.
+ * A potentiometer is also present in these sensors for adjustment of the trigger distance.
  */
 
 #include <avr/io.h>

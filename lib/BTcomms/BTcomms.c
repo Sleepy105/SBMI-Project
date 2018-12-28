@@ -1,12 +1,3 @@
-/*
- *  BTcomms.c
- *
- *  Created on: Nov 30, 2018
- *      Author: Luís Sousa, Leonor Santos
- * 
- *  Library to communicate with a HC-05 Bluetooth Module.
- */
-
 #include <BTcomms.h>
 
 void initBTComms() {

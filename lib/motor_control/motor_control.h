@@ -1,8 +1,13 @@
-/*
- *  motor_control.h
+/**
+ * @file motor_control.c
+ * @author Luís Sousa, Leonor Santos
+ * @date 29 Oct 2018
+ * @brief Motor Control library for 2 DC motors with rotary encoders
  *
- *  Created on: Oct 29, 2018
- *      Author: Luís Sousa, Leonor Santos
+ * The code in this file is intended to provide a easy to use set of functions
+ * with the purpose of DC motor control with encoders.
+ *      
+ * We use the PWM capabilities of the Atmega 328p Timer 0 to drive DC motors.
  */
 
 #include <avr/io.h>

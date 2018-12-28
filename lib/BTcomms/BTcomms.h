@@ -1,12 +1,11 @@
-/*
- *  BTcomms.h
+/**
+ * @file BTcomms.c
+ * @author Luís Sousa, Leonor Santos
+ * @date 30 Nov 2018
+ * @brief Library to communicate with a HC-05 Bluetooth Module.
  *
- *  Created on: Nov 30, 2018
- *      Author: Luís Sousa, Leonor Santos
- * 
- *  Library to communicate with a HC-05 Bluetooth Module.
- *  This library only supports the receival of information from the BT Module.
- *  Although transmission of data is possible, it is not facilitated by the functions defined here.
+ * This library only supports the receival of information from the BT Module.
+ * Although transmission of data is possible, it is not facilitated by the functions defined here.
  */
 
 #include <avr/io.h>

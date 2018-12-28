@@ -27,7 +27,7 @@ void initMotors () {
     _initAuxPins();
     setSpeed(0, 0);  // Don't start the motor running
 
-    /* Finish the Fast-PWM configuration and start the Timer with a 1024 prescaler */
+    /* Finish the  Phase-Correct PWM configuration and start the Timer with a 1024 prescaler */
     TCCR0B = (0<<FOC0A) | (0<<FOC0B) | (0<<WGM02) | (1<<CS02) | (0<<CS01) | (1<<CS00);
 }
 

@@ -220,7 +220,7 @@ void initEEPROM() {
 void initHardware() {
     cli(); // Disable all interrupts during hardware configuration
 
-    //initExternalInterrupts();
+    initExternalInterrupts();
     initMotors();
     initWatchdogTimer();
     setReceiveCallback(&handleReceivedByte);

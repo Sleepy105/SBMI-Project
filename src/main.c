@@ -3,6 +3,24 @@
  *
  *  Created on: Oct 29, 2018
  *      Author: Luís Sousa, Leonor Santos
+ *
+ *  Projetado para utilização com ProMini Atmega328P
+ *
+ *  Implementação do projeto de um Robô seguidor de linha, utilizando 3 bibliotecas : BTcomms, IRArray e motor_control.
+ * 
+ * O projeto utiliza comunicação USART assíncrona com Baud rate de 9600 e tolerância 2; 8 bits de data; 0 bits de paridade e 1 stop bit
+ *
+ *  As portas utilizadas para os sensores IR são PC1 a PC5 com pull up interno ligado
+ *
+ * Os motores utilizam os pinos PD4 a 7 e os encoders estão associadas a INT0 e INT1 no modo de flanco ascendente
+ *
+ * Utilização do timer0 para implementação de phase correct PWM com prescaler de 1024. 
+ * Os registos OCR0x determinam a velocidade de rotação dos motores
+ *
+ * Utilização da funcionalidade de watchdog timer para supervisão do processo e minimização dos estragos em caso de avaria.
+ *
+*Implementação de clock com o Timer 1, por questões de resolução, em modo CTC e base de tempo de 10ms
+
  */
 
 #ifndef F_CPU
